@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.ftpignore
+.ftpconfig
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Model Weights (Large files - DO NOT COMMIT)
+vlnce_baselines/detection/models/*.pth
+vlnce_baselines/detection/models/*.pt
+*.pth
+*.pt
+*.ckpt
+
+# API Keys and Secrets (CRITICAL - DO NOT COMMIT)
+vlnce_baselines/vlm/llm_config.yaml
+vlnce_baselines/vlm/vlm_config.yaml
+*_config.yaml
+!*_config.yaml.template
+.env
+secrets.yaml
+*.key
+
+# Data (Large datasets - DO NOT COMMIT)
+data/
+datasets/
+scene_datasets/
+*.mp4
+*.avi
+
+# Results and Outputs
+results/
+output/
+runs/
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Habitat cache
+.habitat-sim-cache/
+
+# Git
+*.orig
+*.zip
+
+# Tests
+/tests

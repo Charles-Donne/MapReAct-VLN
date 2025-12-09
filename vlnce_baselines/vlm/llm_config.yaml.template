@@ -1,0 +1,32 @@
+# LLM Configuration Template
+# LLM配置模板 - 用于高层规划
+# 
+# 使用方法：
+# 1. 复制此文件为 llm_config.yaml
+# 2. 填入你的API密钥和模型信息
+
+# API密钥（必填）
+api_key: "your-api-key-here"
+
+# API基础URL（必填）
+# OpenAI: https://api.openai.com/v1
+# Azure: https://your-resource.openai.azure.com/openai/deployments/your-deployment
+# 其他兼容API: 填入对应的base_url
+base_url: "https://api.openai.com/v1"
+
+# 模型名称（必填）
+# 推荐使用支持视觉的模型
+# OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo
+# Claude: claude-3-5-sonnet, claude-3-opus
+# Gemini: gemini-1.5-pro, gemini-1.5-flash
+model: "gpt-4o"
+
+# 温度参数（可选，默认0.1）
+# 较低的值使输出更确定性
+temperature: 0.1
+
+# 最大输出token数（可选，默认2000）
+max_tokens: 2000
+
+# API超时时间（可选，默认60秒）
+timeout: 60
