@@ -179,7 +179,51 @@ class VLMNavigationController(InteractiveNavigationController):
         collected_images = []
         collected_directions = []
         
-        for step in range(12):
+        # 保存初始状态 (step-0)
+        obs = self.envs.current_observations
+        if obs:
+            obs = obs[0]
+            batch_obs = self._batch_obs([obs], save_object_detection=True, step=0)
+            poses = torch.from_numpy(np.array([obs['sensor_pose']])).float().to(self.device)
+            
+            map_state = self.mapper.update_map(
+                batch_obs, poses, 0,
+                list(self.detected_classes), self.current_episode_id
+            )
+            
+            rgb_bgr = cv2.cvtColor(obs['rgb'], cv2.COLOR_RGB2BGR)
+            _, landmarks = self.visualizer.save_step_visualization(
+                step=0,
+                episode_id=self.current_episode_id,
+                rgb=rgb_bgr,
+                full_map=map_state['full_map'],
+                trajectory_points=map_state['trajectory_points'],
+                detected_classes=list(self.detected_classes),
+                current_pose=map_state['full_pose'],
+                floor=map_state['floor'],
+                hfov=self.config.MAP.HFOV,
+                detections=self.latest_detections_full if hasattr(self, 'latest_detections_full') else None,
+                labels=self.latest_labels_full if hasattr(self, 'latest_labels_full') else None,
+                landmark_classes=self.landmark_classes,
+                mapping_classes=self.mapping_classes,
+                landmark_config={
+                    'min_total_pixels': self.landmark_min_total_pixels,
+                    'min_area_threshold': self.landmark_min_area_threshold
+                }
+            )
+            # 收集初始方向图像 (Front 0°)
+            img_path = os.path.join(
+                self.vlm_dir, 'observations',
+                f'lookaround_dir0_front.jpg'
+            )
+            cv2.imwrite(img_path, rgb_bgr)
+            collected_images.append(img_path)
+            collected_directions.append(self.DIRECTION_NAMES[0])
+            self.direction_images[self.DIRECTION_NAMES[0]] = img_path
+            print(f"  📷 [0/12] 收集 {self.DIRECTION_NAMES[0]} (初始状态)")
+        
+        # 执行12次旋转 (step 1-12)
+        for step in range(1, 13):
             # 执行旋转
             actions = [{"action": HabitatSimActions.TURN_LEFT}]
             outputs = self.envs.step(actions)
@@ -239,23 +283,24 @@ class VLMNavigationController(InteractiveNavigationController):
                 collected_directions.append(direction_name)
                 self.direction_images[direction_name] = img_path
                 
-                print(f"  📷 [{step+1}/12] 收集 {direction_name}" + (f" +{new_classes}类" if new_classes > 0 else ""))
+                print(f"  📷 [{step}/12] 收集 {direction_name}" + (f" +{new_classes}类" if new_classes > 0 else ""))
             else:
                 if new_classes > 0:
-                    print(f"  [{step+1}/12] +{new_classes}类")
+                    print(f"  [{step}/12] +{new_classes}类")
             
             # 缓存最后一步的观察
             self.latest_obs = obs[0]
         
-        # 注意：环视循环保存的是 step-0 到 step-11（共12张）
-        # 设置 current_step = 12 以避免下次导航覆盖 step-11.png
-        self.current_step = 12
+        # 注意：保存了 step-0（初始）+ step-1 到 step-12（12次旋转）= 共13张
+        # 设置 current_step = 13，表示下次动作将保存为 step-13
+        self.current_step = 13
         
         # 获取最新地图路径（global_map/中的图像由父类save_step_visualization保存）
         self._get_current_map_path()
         
         print("="*60)
         print(f"✅ 完成 | {len(self.detected_classes)}类 | {len(collected_images)}方向图像")
+        print(f"   保存文件: step-0 到 step-12 (共13张)")
         print("="*60 + "\n")
         
         return collected_images, collected_directions
@@ -323,12 +368,12 @@ class VLMNavigationController(InteractiveNavigationController):
         image_paths, direction_names = self.get_4_direction_images_from_cache("initial")
         
         # 获取地图路径
-        # 注意：环视后 current_step=12，但最后保存的地图是 step-11
+        # 注意：环视后 current_step=13，但最后保存的地图是 step-12
         episode_dir = os.path.join(
             self.config.RESULTS_DIR, 
             f'episode_{self.current_episode_id}'
         )
-        last_saved_step = self.current_step - 1  # 11
+        last_saved_step = self.current_step - 1  # 12
         global_map = os.path.join(episode_dir, 'global_map', f'step-{last_saved_step}.png')
         local_map = os.path.join(episode_dir, 'local_map', f'step-{last_saved_step}.png')
         
