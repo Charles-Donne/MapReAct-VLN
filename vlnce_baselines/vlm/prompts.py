@@ -177,7 +177,8 @@ def get_initial_planning_prompt(instruction: str,
         view2_name=direction_names[1],
         view3_name=direction_names[2],
         view4_name=direction_names[3],
-        action_space=action_space
+        action_space=action_space,
+        waypoint_summary="No waypoints yet - this is the starting position."
     )
 
 def get_verification_replanning_prompt(instruction: str,
