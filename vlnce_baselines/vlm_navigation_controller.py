@@ -248,8 +248,8 @@ class VLMNavigationController(InteractiveNavigationController):
             self.latest_obs = obs[0]
         
         # 注意：环视循环保存的是 step-0 到 step-11（共12张）
-        # current_step 应该指向最后保存的步数
-        self.current_step = 11
+        # 设置 current_step = 12 以避免下次导航覆盖 step-11.png
+        self.current_step = 12
         
         # 获取最新地图路径（global_map/中的图像由父类save_step_visualization保存）
         self._get_current_map_path()
@@ -323,12 +323,14 @@ class VLMNavigationController(InteractiveNavigationController):
         image_paths, direction_names = self.get_4_direction_images_from_cache("initial")
         
         # 获取地图路径
+        # 注意：环视后 current_step=12，但最后保存的地图是 step-11
         episode_dir = os.path.join(
             self.config.RESULTS_DIR, 
             f'episode_{self.current_episode_id}'
         )
-        global_map = os.path.join(episode_dir, 'global_map', f'step-{self.current_step}.png')
-        local_map = os.path.join(episode_dir, 'local_map', f'step-{self.current_step}.png')
+        last_saved_step = self.current_step - 1  # 11
+        global_map = os.path.join(episode_dir, 'global_map', f'step-{last_saved_step}.png')
+        local_map = os.path.join(episode_dir, 'local_map', f'step-{last_saved_step}.png')
         
         # 验证地图文件存在
         if not os.path.exists(global_map):
@@ -426,12 +428,14 @@ class VLMNavigationController(InteractiveNavigationController):
             return False, None
         
         # 获取地图路径
+        # 验证时刚完成 360° 扫描，current_step 已递增，需要使用上一步的地图
         episode_dir = os.path.join(
             self.config.RESULTS_DIR, 
             f'episode_{self.current_episode_id}'
         )
-        global_map = os.path.join(episode_dir, 'global_map', f'step-{self.current_step}.png')
-        local_map = os.path.join(episode_dir, 'local_map', f'step-{self.current_step}.png')
+        last_saved_step = self.current_step - 1
+        global_map = os.path.join(episode_dir, 'global_map', f'step-{last_saved_step}.png')
+        local_map = os.path.join(episode_dir, 'local_map', f'step-{last_saved_step}.png')
         
         # 验证地图文件存在
         if not os.path.exists(global_map):
@@ -444,7 +448,7 @@ class VLMNavigationController(InteractiveNavigationController):
             global_map_img = cv2.imread(global_map)
             global_map_img = self.visualize_waypoints_on_map(global_map_img)
             # 保存为单独的可视化版本
-            global_map_for_llm = os.path.join(episode_dir, 'global_map', f'step-{self.current_step}_with_waypoints.png')
+            global_map_for_llm = os.path.join(episode_dir, 'global_map', f'step-{last_saved_step}_with_waypoints.png')
             cv2.imwrite(global_map_for_llm, global_map_img)
         
         # 获取已检测到的landmark类别
