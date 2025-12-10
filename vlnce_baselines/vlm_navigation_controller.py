@@ -247,7 +247,9 @@ class VLMNavigationController(InteractiveNavigationController):
             # 缓存最后一步的观察
             self.latest_obs = obs[0]
         
-        self.current_step = 12
+        # 注意：环视循环保存的是 step-0 到 step-11（共12张）
+        # current_step 应该指向最后保存的步数
+        self.current_step = 11
         
         # 获取最新地图路径（global_map/中的图像由父类save_step_visualization保存）
         self._get_current_map_path()
