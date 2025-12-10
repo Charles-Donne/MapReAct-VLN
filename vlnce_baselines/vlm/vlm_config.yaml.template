@@ -1,0 +1,32 @@
+# VLM Configuration Template
+# VLM配置模板 - 用于低层动作执行
+# 
+# 使用方法：
+# 1. 复制此文件为 vlm_config.yaml
+# 2. 填入你的API密钥和模型信息
+#
+# 注意：VLM和LLM可以使用相同的模型和配置，
+# 也可以使用不同的模型（如LLM用大模型规划，VLM用小模型执行）
+
+# API密钥（必填）
+api_key: "your-api-key-here"
+
+# API基础URL（必填）
+base_url: "https://api.openai.com/v1"
+
+# 模型名称（必填）
+# 动作执行可以使用较小的模型以提高速度
+# OpenAI: gpt-4o-mini (快速), gpt-4o (精确)
+# Claude: claude-3-5-sonnet, claude-3-haiku (快速)
+model: "gpt-4o-mini"
+
+# 温度参数（可选，默认0.1）
+temperature: 0.1
+
+# 最大输出token数（可选，默认1500）
+# 动作执行输出较短，可以设置较小的值
+max_tokens: 1500
+
+# API超时时间（可选，默认45秒）
+# 动作执行需要快速响应
+timeout: 45
