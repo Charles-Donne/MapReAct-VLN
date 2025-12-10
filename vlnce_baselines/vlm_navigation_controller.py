@@ -179,51 +179,9 @@ class VLMNavigationController(InteractiveNavigationController):
         collected_images = []
         collected_directions = []
         
-        # 保存初始状态 (step-0)
-        obs = self.envs.current_observations
-        if obs:
-            obs = obs[0]
-            batch_obs = self._batch_obs([obs], save_object_detection=True, step=0)
-            poses = torch.from_numpy(np.array([obs['sensor_pose']])).float().to(self.device)
-            
-            map_state = self.mapper.update_map(
-                batch_obs, poses, 0,
-                list(self.detected_classes), self.current_episode_id
-            )
-            
-            rgb_bgr = cv2.cvtColor(obs['rgb'], cv2.COLOR_RGB2BGR)
-            _, landmarks = self.visualizer.save_step_visualization(
-                step=0,
-                episode_id=self.current_episode_id,
-                rgb=rgb_bgr,
-                full_map=map_state['full_map'],
-                trajectory_points=map_state['trajectory_points'],
-                detected_classes=list(self.detected_classes),
-                current_pose=map_state['full_pose'],
-                floor=map_state['floor'],
-                hfov=self.config.MAP.HFOV,
-                detections=self.latest_detections_full if hasattr(self, 'latest_detections_full') else None,
-                labels=self.latest_labels_full if hasattr(self, 'latest_labels_full') else None,
-                landmark_classes=self.landmark_classes,
-                mapping_classes=self.mapping_classes,
-                landmark_config={
-                    'min_total_pixels': self.landmark_min_total_pixels,
-                    'min_area_threshold': self.landmark_min_area_threshold
-                }
-            )
-            # 收集初始方向图像 (Front 0°)
-            img_path = os.path.join(
-                self.vlm_dir, 'observations',
-                f'lookaround_dir0_front.jpg'
-            )
-            cv2.imwrite(img_path, rgb_bgr)
-            collected_images.append(img_path)
-            collected_directions.append(self.DIRECTION_NAMES[0])
-            self.direction_images[self.DIRECTION_NAMES[0]] = img_path
-            print(f"  📷 [0/12] 收集 {self.DIRECTION_NAMES[0]} (初始状态)")
-        
-        # 执行12次旋转 (step 1-12)
-        for step in range(1, 13):
+        # 执行12次旋转 (step-0 到 step-11)
+        from habitat.sims.habitat_simulator.actions import HabitatSimActions
+        for step in range(12):
             # 执行旋转
             actions = [{"action": HabitatSimActions.TURN_LEFT}]
             outputs = self.envs.step(actions)
@@ -283,17 +241,17 @@ class VLMNavigationController(InteractiveNavigationController):
                 collected_directions.append(direction_name)
                 self.direction_images[direction_name] = img_path
                 
-                print(f"  📷 [{step}/12] 收集 {direction_name}" + (f" +{new_classes}类" if new_classes > 0 else ""))
+                print(f"  📷 [{step+1}/12] 收集 {direction_name}" + (f" +{new_classes}类" if new_classes > 0 else ""))
             else:
                 if new_classes > 0:
-                    print(f"  [{step}/12] +{new_classes}类")
+                    print(f"  [{step+1}/12] +{new_classes}类")
             
             # 缓存最后一步的观察
             self.latest_obs = obs[0]
         
-        # 注意：保存了 step-0（初始）+ step-1 到 step-12（12次旋转）= 共13张
-        # 设置 current_step = 13，表示下次动作将保存为 step-13
-        self.current_step = 13
+        # 完成12次旋转，保存了 step-0 到 step-11（共12张）
+        # 设置 current_step = 12，表示下次动作将保存为 step-12
+        self.current_step = 12
         
         # 获取最新地图路径（global_map/中的图像由父类save_step_visualization保存）
         self._get_current_map_path()
@@ -310,14 +268,15 @@ class VLMNavigationController(InteractiveNavigationController):
         获取当前语义地图路径（使用global_map/目录中的图像，避免重复保存）
         
         Returns:
-            global_map目录中当前步的地图路径
+            global_map目录中上一步保存的地图路径
         """
-        # 直接返回global_map目录中的路径（由父类step方法保存）
+        # 返回上一步保存的地图（当前步的地图要等step()执行后才会保存）
         episode_dir = os.path.join(
             self.config.RESULTS_DIR, 
             f'episode_{self.current_episode_id}'
         )
-        map_path = os.path.join(episode_dir, 'global_map', f'step-{self.current_step}.png')
+        last_step = self.current_step - 1
+        map_path = os.path.join(episode_dir, 'global_map', f'step-{last_step}.png')
         self.latest_map_image = map_path
         return map_path
 
@@ -616,19 +575,20 @@ class VLMNavigationController(InteractiveNavigationController):
                 return None, None, True
             obs = obs[0]
         
-        # 使用rgb/目录中的图像路径（由父类step方法保存，避免重复保存）
+        # 使用上一步保存的图像（当前步图像要等step()执行后才会保存）
         episode_dir = os.path.join(
             self.config.RESULTS_DIR, 
             f'episode_{self.current_episode_id}'
         )
-        fp_image = os.path.join(episode_dir, 'rgb', f'step-{self.current_step}.png')
+        last_step = self.current_step - 1  # 上一步已保存的文件
+        fp_image = os.path.join(episode_dir, 'rgb', f'step-{last_step}.png')
         
-        # 如果rgb/中的图像还不存在（当前步未执行step），先保存一份临时的
+        # 如果rgb/中的图像还不存在，用当前观察创建临时文件
         if not os.path.exists(fp_image):
             rgb_bgr = cv2.cvtColor(obs['rgb'], cv2.COLOR_RGB2BGR)
             temp_image = os.path.join(
                 self.vlm_dir, 'observations',
-                f'step{self.current_step}_first_person.jpg'
+                f'step{last_step}_first_person.jpg'
             )
             cv2.imwrite(temp_image, rgb_bgr)
             fp_image = temp_image
@@ -637,12 +597,12 @@ class VLMNavigationController(InteractiveNavigationController):
         self._get_current_map_path()
         
         # 获取detection图像路径（如果存在）
-        detection_image = os.path.join(episode_dir, 'detection', f'step-{self.current_step}.png')
+        detection_image = os.path.join(episode_dir, 'detection', f'step-{last_step}.png')
         if not os.path.exists(detection_image):
             detection_image = None
         
         # 获取局部地图路径
-        local_map = os.path.join(episode_dir, 'local_map', f'step-{self.current_step}.png')
+        local_map = os.path.join(episode_dir, 'local_map', f'step-{last_step}.png')
         if not os.path.exists(local_map):
             local_map = None
         
