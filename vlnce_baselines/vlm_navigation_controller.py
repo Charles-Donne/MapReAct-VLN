@@ -689,7 +689,15 @@ class VLMNavigationController(InteractiveNavigationController):
         subtask = self.generate_initial_subtask()
         if not subtask:
             print("✗ 无法生成初始子任务")
-            return {'success': False, 'reason': 'initial_subtask_failed'}
+            return {
+                'success': False,
+                'total_steps': self.current_step,
+                'subtask_count': 0,
+                'detected_classes': list(self.detected_classes) if hasattr(self, 'detected_classes') else [],
+                'gif_path': None,
+                'result_file': None,
+                'reason': 'initial_subtask_failed'
+            }
         
         # 3. 主导航循环
         total_steps = self.current_step

@@ -89,10 +89,12 @@ def main():
     print("\n" + "="*60)
     print("🏁 导航结果")
     print("="*60)
-    print(f"✅ 成功: {result['success']}")
-    print(f"📊 总步数: {result['total_steps']}")
-    print(f"📋 子任务数: {result['subtask_count']}")
-    print(f"🔍 检测类别: {len(result['detected_classes'])}")
+    print(f"✅ 成功: {result.get('success', False)}")
+    print(f"📊 总步数: {result.get('total_steps', 0)}")
+    print(f"📋 子任务数: {result.get('subtask_count', 0)}")
+    print(f"🔍 检测类别: {len(result.get('detected_classes', []))}")
+    if result.get('reason'):
+        print(f"❌ 失败原因: {result['reason']}")
     print(f"📁 结果目录: {config.RESULTS_DIR}/episode_{args.episode_id}/")
     print("="*60)
 
