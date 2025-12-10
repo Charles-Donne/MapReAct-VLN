@@ -327,12 +327,12 @@ class VLMNavigationController(InteractiveNavigationController):
         image_paths, direction_names = self.get_4_direction_images_from_cache("initial")
         
         # 获取地图路径
-        # 注意：环视后 current_step=13，但最后保存的地图是 step-12
+        # 注意：环视后 current_step=12，最后保存的地图是 step-11
         episode_dir = os.path.join(
             self.config.RESULTS_DIR, 
             f'episode_{self.current_episode_id}'
         )
-        last_saved_step = self.current_step - 1  # 12
+        last_saved_step = self.current_step - 1  # 11
         global_map = os.path.join(episode_dir, 'global_map', f'step-{last_saved_step}.png')
         local_map = os.path.join(episode_dir, 'local_map', f'step-{last_saved_step}.png')
         
