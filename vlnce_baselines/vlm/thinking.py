@@ -103,6 +103,8 @@ class LLMPlanner(BaseAPIClient):
             print(f"  📍 Images: 4 directions + Global map")
         
         response = self.call_api(prompt, images)
+        return response
+    
     def verify_and_replan(self,
                          instruction: str,
                          current_subtask: Dict,
