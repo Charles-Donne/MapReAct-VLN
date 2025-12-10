@@ -158,27 +158,23 @@ The agent has performed a 360° scan. You are provided with 4 first-person RGB v
 
 
 def get_initial_planning_prompt(instruction: str, 
-                               direction_names: list, 
-                               action_space: str) -> str:
+                               action_space: str,
+                               waypoint_summary: str = "No waypoints recorded yet (initial planning).") -> str:
     """
     获取初始规划提示词
     
     Args:
         instruction: 完整导航指令
-        direction_names: 方向名称列表（4个方向）
         action_space: 动作空间描述
+        waypoint_summary: waypoint历史摘要
         
     Returns:
         格式化的提示词字符串
     """
     return INITIAL_PLANNING_PROMPT.format(
         instruction=instruction,
-        view1_name=direction_names[0],
-        view2_name=direction_names[1],
-        view3_name=direction_names[2],
-        view4_name=direction_names[3],
         action_space=action_space,
-        waypoint_summary="No waypoints yet - this is the starting position."
+        waypoint_summary=waypoint_summary
     )
 
 def get_verification_replanning_prompt(instruction: str,

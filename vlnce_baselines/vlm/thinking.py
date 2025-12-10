@@ -89,7 +89,6 @@ class LLMPlanner(BaseAPIClient):
         
         prompt = get_initial_planning_prompt(
             instruction, 
-            direction_names, 
             self.action_space
         )
         
