@@ -38,10 +38,10 @@ if ! git diff --cached --quiet 2>/dev/null; then
 These files should only exist locally and not be committed."
 fi
 
-# 5. 拉取远程更新
+# 5. 拉取远程更新（允许不相关的历史合并）
 echo ""
 echo "⬇️  拉取远程更新..."
-git pull origin main
+git pull origin main --allow-unrelated-histories
 
 # 6. 恢复 API 配置（如果之前备份了）
 echo ""
